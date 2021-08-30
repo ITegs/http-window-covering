@@ -2,6 +2,12 @@
 #include <ESPAsyncWebServer.h>
 #include "data.h" //only for privacy reasons
 
+#define STEPPER_PIN_1 14
+#define STEPPER_PIN_2 12
+#define STEPPER_PIN_3 13
+#define STEPPER_PIN_4 15
+int step_number = 0;
+
 const char* ssid = ssid_private;
 const char* password = password_private;
 
@@ -10,8 +16,6 @@ AsyncWebServer server(80);
 int positionState = 0;
 int currentPosition = 0;
 int targetPosition = 0;
-
-String status = "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(currentPosition)+",\"targetPosition\": "+String(targetPosition)+"}";
 
 void initWiFi() {
     WiFi.mode(WIFI_STA);
@@ -26,16 +30,21 @@ void initWiFi() {
 }
 
 void setup(){
+    pinMode(STEPPER_PIN_1, OUTPUT);
+    pinMode(STEPPER_PIN_2, OUTPUT);
+    pinMode(STEPPER_PIN_3, OUTPUT);
+    pinMode(STEPPER_PIN_4, OUTPUT);
+
     Serial.begin(57600);
     initWiFi();
 
     server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "application/json", status);
+        request->send(200, "application/json", "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(currentPosition)+",\"targetPosition\": "+String(targetPosition)+"}");
     });
 
     server.on("/targetPosition", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebParameter* p = request->getParam("value");
-        targetPosition(p->value().toInt());
+        toTargetPosition(p->value().toInt());
         request->send(200);
     });
     server.on("/currentPosition", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -56,7 +65,20 @@ void setup(){
     server.begin();
 }
 
-
+void toTargetPosition(int p){
+    targetPosition = p;
+    if(p<currentPosition){
+        for(p*250; p > 0; p--){
+            OneStep(true);
+            delay(2);
+        }
+    }else{
+        for(p*250; p > 0; p--){
+            OneStep(false);
+            delay(3);
+        }
+    }
+}
 
 void OneStep(bool dir){
     if(dir){
