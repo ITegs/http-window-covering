@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <ESP8266HTTPClient.h>
 #include "data.h" //only for privacy reasons
 
 #define STEPPER_PIN_1 14
@@ -46,7 +47,41 @@ void setup(){
         AsyncWebParameter* p = request->getParam("value");
         targetPosition = p->value().toInt() * 250;
         request->send(200);
+    });
+    
     server.begin();
+}
+
+void loop(){
+    if(targetPosition != currentPosition){
+        if(targetPosition<currentPosition){
+            OneStep(true);
+            delay(2);
+            currentPosition--;
+            sendCurrentPosition();
+        }else{
+            OneStep(false);
+            delay(3);
+            currentPosition++;
+            sendCurrentPosition();
+        }
+    }
+}
+
+void sendCurrentPosition(){
+    WiFiClient wifiClient;
+    HTTPClient http;
+    String URL = "http://192.168.188.67:2000/currentPosition?value="+String(round(currentPosition / 250));
+    http.begin(wifiClient, URL);
+    int httpCode = http.GET();
+    Serial.println(httpCode);
+    if(httpCode == HTTP_CODE_OK) {
+        Serial.print("HTTP response code ");
+        Serial.println(httpCode);
+        String response = http.getString();
+        Serial.println(response);
+    }
+    http.end();
 }
 
 void OneStep(bool dir){
@@ -108,19 +143,5 @@ void OneStep(bool dir){
     step_number++;
     if(step_number > 3){
         step_number = 0;
-    }
-}
-
-void loop(){
-    if(targetPosition != currentPosition){
-        if(targetPosition<currentPosition){
-            OneStep(true);
-            delay(2);
-            currentPosition--;
-        }else{
-            OneStep(false);
-            delay(3);
-            currentPosition++;
-        }
     }
 }
