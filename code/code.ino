@@ -58,12 +58,16 @@ void loop(){
             OneStep(true);
             delay(2);
             currentPosition--;
-            sendCurrentPosition();
+            if(targetPosition == currentPosition){
+                sendCurrentPosition();
+            }
         }else{
             OneStep(false);
             delay(3);
             currentPosition++;
-            sendCurrentPosition();
+            if(targetPosition == currentPosition){
+                sendCurrentPosition();
+            }
         }
     }
 }
