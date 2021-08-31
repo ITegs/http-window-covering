@@ -39,45 +39,14 @@ void setup(){
     initWiFi();
 
     server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "application/json", "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(currentPosition)+",\"targetPosition\": "+String(targetPosition)+"}");
+        request->send(200, "application/json", "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(round(currentPosition / 250))+",\"targetPosition\": "+String(round(targetPosition / 250))+"}");
     });
 
-    server.on("/targetPosition", HTTP_GET, [](AsyncWebServerRequest *request){
+    server.on("/setTargetPosition", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebParameter* p = request->getParam("value");
-        toTargetPosition(p->value().toInt());
+        targetPosition = p->value().toInt() * 250;
         request->send(200);
-    });
-    server.on("/currentPosition", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebParameter* p = request->getParam("value");
-        // currentPosition(p);
-        request->send(200);
-    });
-    server.on("/positionState", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebParameter* p = request->getParam("value");
-        // positionState(p);
-        request->send(200);
-    });
-    server.on("/obstructionDetected", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebParameter* p = request->getParam("value");
-        request->send(200);
-    });
-
     server.begin();
-}
-
-void toTargetPosition(int p){
-    targetPosition = p;
-    if(p<currentPosition){
-        for(p*250; p > 0; p--){
-            OneStep(true);
-            delay(2);
-        }
-    }else{
-        for(p*250; p > 0; p--){
-            OneStep(false);
-            delay(3);
-        }
-    }
 }
 
 void OneStep(bool dir){
@@ -142,4 +111,16 @@ void OneStep(bool dir){
     }
 }
 
-void loop(){}
+void loop(){
+    if(targetPosition != currentPosition){
+        if(targetPosition<currentPosition){
+            OneStep(true);
+            delay(2);
+            currentPosition--;
+        }else{
+            OneStep(false);
+            delay(3);
+            currentPosition++;
+        }
+    }
+}
