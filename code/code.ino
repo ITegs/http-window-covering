@@ -40,12 +40,12 @@ void setup(){
     initWiFi();
 
     server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "application/json", "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(round(currentPosition / 250))+",\"targetPosition\": "+String(round(targetPosition / 250))+"}");
+        request->send(200, "application/json", "{\"positionState\": "+String(positionState)+",\"currentPosition\": "+String(round(currentPosition / 375))+",\"targetPosition\": "+String(round(targetPosition / 375))+"}");
     });
 
     server.on("/setTargetPosition", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebParameter* p = request->getParam("value");
-        targetPosition = p->value().toInt() * 250;
+        targetPosition = p->value().toInt() * 375;
         request->send(200);
     });
     
@@ -63,7 +63,7 @@ void loop(){
             }
         }else{
             OneStep(false);
-            delay(3);
+            delay(4);
             currentPosition++;
             if(targetPosition == currentPosition){
                 sendCurrentPosition();
@@ -75,7 +75,7 @@ void loop(){
 void sendCurrentPosition(){
     WiFiClient wifiClient;
     HTTPClient http;
-    String URL = "http://192.168.188.67:2000/currentPosition?value="+String(round(currentPosition / 250));
+    String URL = "http://192.168.188.67:2000/currentPosition?value="+String(round(currentPosition / 375));
     http.begin(wifiClient, URL);
     int httpCode = http.GET();
     Serial.println(httpCode);
