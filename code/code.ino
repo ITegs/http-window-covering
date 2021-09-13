@@ -53,15 +53,17 @@ void setup(){
 }
 
 void loop(){
-    if(targetPosition != currentPosition){
-        if(targetPosition<currentPosition){
+    if(targetPosition != currentPosition){ //move
+        if(targetPosition<currentPosition){ //go down
+            positionState = 1;
             OneStep(true);
             delay(2);
             currentPosition--;
             if(targetPosition == currentPosition){
                 sendCurrentPosition();
             }
-        }else{
+        } else { //go up
+            positionState = 0;
             OneStep(false);
             delay(4);
             currentPosition++;
@@ -69,6 +71,8 @@ void loop(){
                 sendCurrentPosition();
             }
         }
+    } else {
+        positionState = 2;
     }
 }
 
